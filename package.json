@@ -1,0 +1,8 @@
+{
+  "name": "com.brutime.brulibrary",
+  "version": "1.0.0",
+  "displayName": "Bru Library",
+  "description": "Bru Library",
+  "unity": "2020.3",
+  "unityRelease": "21f1"
+}
