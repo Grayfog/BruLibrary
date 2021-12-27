@@ -12,7 +12,7 @@ namespace BruLibrary
         private Dictionary<int, string> assetPathes = new Dictionary<int, string>();
 
 
-        public void Initialize()
+        public void Init()
         {
             for (var i = 0; i < groups.Length; i++)
             {

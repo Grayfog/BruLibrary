@@ -9,8 +9,7 @@ namespace BruLibrary
 {
     public class EcsEntityGameObjectFactory
     {
-        public const int DefaultCapacity = 0;
-        public const int RequestsCapacity = 30;
+        private const int DefaultCapacity = 0;
 
         private static readonly Vector3 HiddenPosition = new Vector3(-100.0f, -100.0f, 0.0f);
 
@@ -39,7 +38,7 @@ namespace BruLibrary
             for (var i = 0; i < this.poolCapacities.Length; i++)
             {
                 var poolCapacity = poolCapacities[i];
-                CreatePool(poolCapacity.PrefabId, this.poolsRoot);
+                CreatePool(poolCapacity.PrefabId);
             }
         }
 
@@ -52,7 +51,7 @@ namespace BruLibrary
             {
                 Debug.LogWarning($"Create: Not contains pool for {prefabId}. Check pool capacities.");
 
-                CreatePool(prefabId, poolsRoot);
+                CreatePool(prefabId);
             }
 
             var pool = pools[prefabId];
@@ -115,7 +114,7 @@ namespace BruLibrary
             Resources.UnloadUnusedAssets();
 #endif
 
-            var pool = pools.ContainsKey(prefabId) ? GetPool(prefabId) : CreatePool(prefabId, poolsRoot);
+            var pool = pools.ContainsKey(prefabId) ? GetPool(prefabId) : CreatePool(prefabId);
             var itemIndex = pool.LinkItem(gameObject);
 
             entityGameObject.IndexInPool = itemIndex;
@@ -181,7 +180,7 @@ namespace BruLibrary
         }
 
 
-        private GameObjectPool CreatePool(int prefabId, GameObject poolsRoot)
+        private GameObjectPool CreatePool(int prefabId)
         {
             var poolCreationSettings = new GameObjectPoolCreationSettings
             {

@@ -1,10 +1,8 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 
 namespace BruLibrary
 {
-    [Serializable]
     public class PoolsRootsData
     {
         public GameObject Root = default;
