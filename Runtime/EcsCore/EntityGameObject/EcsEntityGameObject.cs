@@ -1,4 +1,5 @@
-﻿using Leopotam.Ecs;
+﻿using System;
+using Leopotam.Ecs;
 using UnityEngine;
 
 
@@ -6,9 +7,21 @@ namespace BruLibrary
 {
     public class EcsEntityGameObject : MonoBehaviour
     {
-        public BaseEcsComponentProvider[] ComponentsProviders = new BaseEcsComponentProvider[0];
+        public BaseEcsComponentProvider[] ComponentsProviders = Array.Empty<BaseEcsComponentProvider>();
         public int PrefabId = -1;
         public EcsEntity Entity = default;
         public int IndexInPool = -1;
+
+
+        public virtual void EnableInPool()
+        {
+            gameObject.SetActive(true);
+        }
+        
+        
+        public virtual void DisableInPool()
+        {
+            gameObject.SetActive(false);
+        }
     }
 }

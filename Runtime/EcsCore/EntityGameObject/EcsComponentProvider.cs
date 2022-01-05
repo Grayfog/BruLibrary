@@ -7,11 +7,15 @@ namespace BruLibrary
 {
     public class EcsComponentProvider<T> : BaseEcsComponentProvider where T : struct
     {
-        [SerializeField]
-        public T Component;
+        [SerializeField] public T Component;
 
 
-        public override void AddOrResetComponent(EcsEntityGameObject entityGameObject)
+        public override void Prepare(EcsEntityGameObject entityGameObject)
+        {
+        }
+
+
+        public override void AddComponentToEntity(EcsEntityGameObject entityGameObject)
         {
             entityGameObject.Entity.Replace(Component);
         }

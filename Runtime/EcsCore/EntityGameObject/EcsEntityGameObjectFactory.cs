@@ -11,17 +11,16 @@ namespace BruLibrary
     {
         private const int DefaultCapacity = 0;
 
-        private static readonly Vector3 HiddenPosition = new Vector3(-100.0f, -100.0f, 0.0f);
+        private static readonly Vector3 HiddenPosition = new(-10000.0f, -10000.0f, -10000.0f);
 
-        private PrefabsLookup prefabsLookup = default;
-        private PoolCapacity[] poolCapacities = default;
-        private EcsWorld world = default;
-        private GameObject root = default;
-        private GameObject poolsRoot = default;
+        private PrefabsLookup prefabsLookup;
+        private PoolCapacity[] poolCapacities;
+        private EcsWorld world;
+        private GameObject root;
+        private GameObject poolsRoot;
 
-        private Dictionary<int, GameObjectPool> pools = default;
-
-        private Dictionary<int, GameObject> cachedPrefabs = default;
+        private Dictionary<int, GameObjectPool> pools;
+        private Dictionary<int, GameObject> cachedPrefabs;
 
 
         public void Init(PrefabsLookup prefabsLookup, PoolCapacity[] poolCapacities, EcsWorld world, GameObject root, GameObject poolsRoot)
@@ -68,8 +67,8 @@ namespace BruLibrary
             transform.localScale = scale;
 
             SetupEntityInEntityGameObject(entityGameObject);
-
-            entityGameObject.gameObject.SetActive(true);
+            
+            entityGameObject.EnableInPool();
 
             return entityGameObject;
         }
@@ -77,10 +76,15 @@ namespace BruLibrary
 
         public void RegisterEntity(EcsEntityGameObject entityGameObject)
         {
+            if (entityGameObject.IndexInPool != -1)
+            {
+                return;
+            }
+            
             var prefabId = entityGameObject.PrefabId;
             var gameObject = entityGameObject.gameObject;
 
-            SetupComponentsProviders(entityGameObject);
+            PrepareProvidersEntityGameObject(entityGameObject);
 
             if (!prefabsLookup.Contains(entityGameObject.PrefabId))
             {
@@ -123,19 +127,6 @@ namespace BruLibrary
         }
 
 
-        public void SetupEntityInEntityGameObject(EcsEntityGameObject entityGameObject)
-        {
-            var entity = world.NewEntity();
-            entity.Get<Ref<EcsEntityGameObject>>().Value = entityGameObject;
-            entityGameObject.Entity = entity;
-
-            foreach (var componentProvider in entityGameObject.ComponentsProviders)
-            {
-                componentProvider.AddOrResetComponent(entityGameObject);
-            }
-        }
-
-
         public void Destroy(EcsEntityGameObject entityGameObject)
         {
             //Debug.Log($"Destroy entity: {entityGameObject.Entity}. " +
@@ -165,7 +156,7 @@ namespace BruLibrary
 
             var poolItem = pool.Items[entityGameObject.IndexInPool];
 
-            poolItem.gameObject.SetActive(false);
+            poolItem.DisableInPool();
 
             poolItem.transform.SetParent(pool.RootTransform);
             poolItem.transform.localPosition = HiddenPosition;
@@ -174,9 +165,27 @@ namespace BruLibrary
         }
 
 
-        private void SetupComponentsProviders(EcsEntityGameObject entityGameObject)
+        private void PrepareProvidersEntityGameObject(EcsEntityGameObject entityGameObject)
         {
             entityGameObject.ComponentsProviders = entityGameObject.GetComponents<BaseEcsComponentProvider>();
+            
+            foreach (var componentProvider in entityGameObject.ComponentsProviders)
+            {
+                componentProvider.Prepare(entityGameObject);
+            }
+        }
+        
+        
+        private void SetupEntityInEntityGameObject(EcsEntityGameObject entityGameObject)
+        {
+            var entity = world.NewEntity();
+            entity.Get<Ref<EcsEntityGameObject>>().Value = entityGameObject;
+            entityGameObject.Entity = entity;
+
+            foreach (var componentProvider in entityGameObject.ComponentsProviders)
+            {
+                componentProvider.AddComponentToEntity(entityGameObject);
+            }
         }
 
 
@@ -217,13 +226,13 @@ namespace BruLibrary
 #if UNITY_EDITOR
             if (!prefabsLookup.Contains(prefabId))
             {
-                throw new UnityException($"Prefab loockup not contains pool for {prefabId}. Check pool capacities.");
+                throw new UnityException($"Prefab lookup not contains pool for {prefabId}. Check pool capacities.");
             }
 #endif
 
             if (!cachedPrefabs.ContainsKey(prefabId))
             {
-                string assetPath = prefabsLookup[prefabId];
+                var assetPath = prefabsLookup[prefabId];
                 cachedPrefabs[prefabId] = Resources.Load<GameObject>(AssetPath.ConvertToResourcesPath(assetPath));
             }
 
@@ -245,11 +254,11 @@ namespace BruLibrary
             }
 #endif
 
-            SetupComponentsProviders(entityGameObject);
+            PrepareProvidersEntityGameObject(entityGameObject);
 
             entityGameObject.IndexInPool = indexInPool;
 
-            gameObject.SetActive(false);
+            entityGameObject.DisableInPool();
 
             return entityGameObject;
         }
@@ -257,9 +266,8 @@ namespace BruLibrary
 
         private int GetCapacity(int prefabId)
         {
-            for (var i = 0; i < poolCapacities.Length; i++)
+            foreach (var poolCapacity in poolCapacities)
             {
-                var poolCapacity = poolCapacities[i];
                 if (poolCapacity.PrefabId == prefabId)
                 {
                     return poolCapacity.Capacity;
@@ -275,7 +283,7 @@ namespace BruLibrary
 #if UNITY_EDITOR
             if (!prefabsLookup.Contains(prefabId))
             {
-                throw new UnityException($"Prefabs loockup not contains pool for {prefabId}. Check pool capacities.");
+                throw new UnityException($"Prefabs lookup not contains pool for {prefabId}. Check pool capacities.");
             }
 #endif
 
